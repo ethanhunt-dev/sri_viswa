@@ -9,11 +9,11 @@ require_once __DIR__ . '/core/models/CrudModel.php';
 $tableName = 'main_menu';
 $adminPageTitle = 'Manage Main Menus';
 $adminNavActive = 'main_menu';
-$privs = [
-    'add'    => true,
-    'update' => true,
-    'delete' => true
-];
+$privs = get_menu_privileges(__FILE__);
+if (!$privs['view']) {
+    header("Location: home");
+    exit;
+}
 
 $excludeCkEditor = ['title', 'file_path', 'icon']; // Exclude these varchar fields from CKEditor
 
@@ -26,7 +26,6 @@ $hideInList = [];
 $hideInAdd = [];
 $hideInEdit = [];
 
-$pdo = db();
 $model = new CrudModel($pdo, $tableName);
 $message = '';
 $isError = false;

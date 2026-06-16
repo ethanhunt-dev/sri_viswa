@@ -9,11 +9,11 @@ require_once __DIR__ . '/core/models/CrudModel.php';
 $tableName = 'homepage_banners';
 $adminPageTitle = 'Manage Hero Banners';
 $adminNavActive = 'home_banners';
-$privs = [
-    'add'    => true,
-    'update' => true,
-    'delete' => true
-];
+$privs = get_menu_privileges(__FILE__);
+if (!$privs['view']) {
+    header("Location: home");
+    exit;
+}
 
 // Define file upload fields
 $images = ['image']; // Banner images

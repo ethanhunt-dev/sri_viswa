@@ -120,4 +120,64 @@ function base_url(string $path = ''): string
     return $base . $cleanPath;
 }
 
+/**
+ * Fetch CRUD privileges for a specific page based on its filename.
+ */
+function get_menu_privileges(string $filePath): array
+{
+    $default = ['view' => true, 'add' => true, 'update' => true, 'delete' => true];
+    try {
+        $pdo = db();
+        
+        // Ensure menu_privileges table exists
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `menu_privileges` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `menu_type` VARCHAR(10) NOT NULL,
+            `menu_item_id` INT NOT NULL,
+            `can_view` TINYINT(1) DEFAULT 1,
+            `can_add` TINYINT(1) DEFAULT 1,
+            `can_update` TINYINT(1) DEFAULT 1,
+            `can_delete` TINYINT(1) DEFAULT 1,
+            UNIQUE KEY `uk_menu_item` (`menu_type`, `menu_item_id`)
+        )");
+        
+        // Clean file path to base filename
+        $filename = basename($filePath);
+        
+        // First check in sub_menu
+        $sub = get_row("SELECT id FROM sub_menu WHERE file_path = ? LIMIT 1", [$filename]);
+        if ($sub) {
+            $priv = get_row("SELECT can_view, can_add, can_update, can_delete FROM menu_privileges WHERE menu_type = 'sub' AND menu_item_id = ? LIMIT 1", [(int)$sub['id']]);
+            if ($priv) {
+                return [
+                    'view' => (bool)$priv['can_view'],
+                    'add' => (bool)$priv['can_add'],
+                    'update' => (bool)$priv['can_update'],
+                    'delete' => (bool)$priv['can_delete']
+                ];
+            }
+            return $default;
+        }
+        
+        // Then check in main_menu
+        $main = get_row("SELECT id FROM main_menu WHERE file_path = ? LIMIT 1", [$filename]);
+        if ($main) {
+            $priv = get_row("SELECT can_view, can_add, can_update, can_delete FROM menu_privileges WHERE menu_type = 'main' AND menu_item_id = ? LIMIT 1", [(int)$main['id']]);
+            if ($priv) {
+                return [
+                    'view' => (bool)$priv['can_view'],
+                    'add' => (bool)$priv['can_add'],
+                    'update' => (bool)$priv['can_update'],
+                    'delete' => (bool)$priv['can_delete']
+                ];
+            }
+            return $default;
+        }
+        
+        return $default;
+    } catch (Throwable $e) {
+        return $default;
+    }
+}
+
 

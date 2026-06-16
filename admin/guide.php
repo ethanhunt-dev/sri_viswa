@@ -2,6 +2,13 @@
 declare(strict_types=1);
 
 require __DIR__ . '/auth.php';
+require_once __DIR__ . '/../includes/db.php';
+
+$privs = get_menu_privileges(__FILE__);
+if (!$privs['view']) {
+    header("Location: home");
+    exit;
+}
 
 $adminPageTitle = 'Guide';
 $adminNavActive = 'guide';

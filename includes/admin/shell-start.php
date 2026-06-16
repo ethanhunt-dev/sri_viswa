@@ -34,6 +34,44 @@ try {
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`main_menu_id`) REFERENCES `main_menu`(`id`) ON DELETE CASCADE
     )");
+    // Migrate old privileges table structure if present
+    try {
+        $sidebarPdo->query("SELECT menu_name FROM menu_privileges LIMIT 1");
+        $sidebarPdo->exec("DROP TABLE `menu_privileges`");
+    } catch (Throwable $t) {}
+
+    // Create menu_privileges table
+    $sidebarPdo->exec("CREATE TABLE IF NOT EXISTS `menu_privileges` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `menu_type` VARCHAR(10) NOT NULL,
+        `menu_item_id` INT NOT NULL,
+        `can_view` TINYINT(1) DEFAULT 1,
+        `can_add` TINYINT(1) DEFAULT 1,
+        `can_update` TINYINT(1) DEFAULT 1,
+        `can_delete` TINYINT(1) DEFAULT 1,
+        UNIQUE KEY `uk_menu_item` (`menu_type`, `menu_item_id`)
+    )");
+
+    // Create admins table
+    $sidebarPdo->exec("CREATE TABLE IF NOT EXISTS `admins` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `username` VARCHAR(50) NOT NULL UNIQUE,
+        `password_hash` VARCHAR(255) NOT NULL,
+        `allowed_ip` VARCHAR(45) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $adminsCount = $sidebarPdo->query("SELECT COUNT(*) FROM `admins`")->fetchColumn();
+    if ($adminsCount == 0) {
+        $configPath = __DIR__ . '/../config.php';
+        $config = is_readable($configPath) ? require $configPath : [];
+        $adminCfg = $config['admin'] ?? [
+            'username' => 'admin',
+            'password_hash' => '$2y$10$wYUHTlQWyxbf4JkJb44CYOjgJHwF.hp5/qQTwOJTtOOURtolBaBMC'
+        ];
+        $stmt = $sidebarPdo->prepare("INSERT INTO `admins` (`username`, `password_hash`) VALUES (?, ?)");
+        $stmt->execute([$adminCfg['username'], $adminCfg['password_hash']]);
+    }
     // Seed default entries if tables are empty
     $mainCount = $sidebarPdo->query("SELECT COUNT(*) FROM `main_menu`")->fetchColumn();
     if ($mainCount == 0) {
@@ -43,11 +81,26 @@ try {
             ('Guide', 'guide.php', 'fa-circle-question', 3),
             ('About Us', 'about_us.php', 'fa-address-card', 4),
             ('Main Menu', 'main_menu.php', 'fa-list', 5),
-            ('Sub Menu', 'sub_menu.php', 'fa-indent', 6)");
+            ('Sub Menu', 'sub_menu.php', 'fa-indent', 6),
+            ('Change Password', 'change_password.php', 'fa-key', 7)");
+    } else {
+        $cpExists = $sidebarPdo->query("SELECT COUNT(*) FROM `main_menu` WHERE `file_path` = 'change_password.php'")->fetchColumn();
+        if (!$cpExists) {
+            $sidebarPdo->exec("INSERT INTO `main_menu` (`title`, `file_path`, `icon`, `sort_order`) VALUES ('Change Password', 'change_password.php', 'fa-key', 7)");
+        }
     }
 
-    // Fetch menus for sidebar
-    $stmt = $sidebarPdo->query("SELECT * FROM `main_menu` ORDER BY `sort_order` ASC, `id` ASC");
+    // Load config to check developer mode
+    $configPath = __DIR__ . '/../config.php';
+    $config = is_readable($configPath) ? require $configPath : [];
+    $developerMode = (bool) ($config['developer_mode'] ?? false);
+
+    // Fetch menus for sidebar (hide Main Menu and Sub Menu management pages from sidebar if not in developer mode)
+    if ($developerMode) {
+        $stmt = $sidebarPdo->query("SELECT * FROM `main_menu` ORDER BY `sort_order` ASC, `id` ASC");
+    } else {
+        $stmt = $sidebarPdo->query("SELECT * FROM `main_menu` WHERE file_path NOT IN ('main_menu.php', 'sub_menu.php') ORDER BY `sort_order` ASC, `id` ASC");
+    }
     $mainMenus = $stmt->fetchAll(PDO::FETCH_ASSOC);
     // Ensure file_path key exists
     foreach ($mainMenus as &$mm) {
@@ -66,6 +119,36 @@ try {
         }
     }
     unset($cm);
+
+    // Fetch privileges to filter sidebar links dynamically
+    $privMap = ['main' => [], 'sub' => []];
+    try {
+        $privRows = $sidebarPdo->query("SELECT menu_type, menu_item_id, can_view FROM `menu_privileges`")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($privRows as $row) {
+            $privMap[$row['menu_type']][$row['menu_item_id']] = (bool)$row['can_view'];
+        }
+    } catch (Throwable $t) {
+        // Table might not exist yet
+    }
+
+    // Filter main menus: skip any where can_view is false
+    $mainMenus = array_filter($mainMenus, function($mm) use ($privMap) {
+        $id = (int)$mm['id'];
+        if (isset($privMap['main'][$id]) && !$privMap['main'][$id]) {
+            return false;
+        }
+        return true;
+    });
+
+    // Filter sub menus: skip any where can_view is false
+    $childrenMenus = array_filter($childrenMenus, function($cm) use ($privMap) {
+        $id = (int)$cm['id'];
+        if (isset($privMap['sub'][$id]) && !$privMap['sub'][$id]) {
+            return false;
+        }
+        return true;
+    });
+
     // Attach children to their main menu
     foreach ($childrenMenus as $child) {
         $pId = $child['main_menu_id'];
@@ -104,9 +187,10 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="../assets/css/site.css" />
+    <link rel="stylesheet" href="../assets/css/site.css?v=<?= filemtime(__DIR__ . '/../../assets/css/site.css') ?>" />
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Dropdown navigation group toggle logic
             document.querySelectorAll('.admin-nav-toggle-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -121,11 +205,48 @@ try {
                     }
                 });
             });
+
+            // Sidebar toggle logic (State is persisted in localStorage)
+            const adminApp = document.querySelector('.admin-app');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+            // Restore state on load (for desktop sizes)
+            if (window.innerWidth >= 880) {
+                const isCollapsed = localStorage.getItem('admin-sidebar-collapsed') === 'true';
+                if (isCollapsed) {
+                    adminApp.classList.add('sidebar-collapsed');
+                }
+            }
+
+            function toggleSidebar() {
+                if (window.innerWidth >= 880) {
+                    adminApp.classList.toggle('sidebar-collapsed');
+                    const collapsed = adminApp.classList.contains('sidebar-collapsed');
+                    localStorage.setItem('admin-sidebar-collapsed', collapsed);
+                } else {
+                    adminApp.classList.toggle('sidebar-open');
+                }
+            }
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    toggleSidebar();
+                });
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    adminApp.classList.remove('sidebar-open');
+                });
+            }
         });
     </script>
 </head>
 <body class="admin-body admin-body--app">
     <div class="admin-app">
+        <div class="admin-sidebar-overlay" id="sidebar-overlay"></div>
         <aside class="admin-sidebar" aria-label="Admin navigation">
             <a class="admin-sidebar-logo" href="./index.php">
                 <span class="admin-sidebar-logo-text">SRI VASAVI</span>
@@ -184,14 +305,18 @@ try {
         </aside>
 
         <div class="admin-app-main">
-            <header class="admin-topbar">
-                <div class="admin-topbar-text">
-                    <p class="admin-topbar-kicker">Contact enquiries</p>
-                    <h1 class="admin-topbar-title"><?= htmlspecialchars($adminPageTitle) ?></h1>
+            <header class="admin-topbar" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div class="admin-topbar-left" style="display: flex; align-items: center; gap: 16px;">
+                    <button id="sidebar-toggle" class="admin-topbar-toggle-btn" aria-label="Toggle Sidebar">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="admin-topbar-text">
+                        <h1 class="admin-topbar-title"><?= htmlspecialchars($adminPageTitle) ?></h1>
+                    </div>
                 </div>
-                <div class="admin-topbar-actions">
-                    <a class="admin-btn admin-btn--ghost" href="../contact.php" target="_blank" rel="noopener noreferrer">Contact form</a>
-                    <a class="admin-btn admin-btn--ghost" href="./logout.php">Log out</a>
+                <div class="admin-topbar-actions" style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-family: 'Outfit', sans-serif; font-size: 14px; color: #4a5a6e; font-weight: 600;"><i class="fa-solid fa-user" style="margin-right: 6px; color: var(--brand);"></i>Hi Admin</span>
+                    <a class="admin-btn admin-btn--ghost" href="./logout.php"><i class="fa-solid fa-right-from-bracket" style="margin-right: 6px;"></i>Log out</a>
                 </div>
             </header>
 

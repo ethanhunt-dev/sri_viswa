@@ -9,11 +9,11 @@ require_once __DIR__ . '/core/models/CrudModel.php';
 $tableName = 'products';
 $adminPageTitle = 'Manage Products';
 $adminNavActive = 'products';
-$privs = [
-    'add'    => true,
-    'update' => true,
-    'delete' => true
-];
+$privs = get_menu_privileges(__FILE__);
+if (!$privs['view']) {
+    header("Location: home");
+    exit;
+}
 
 // Define file upload fields
 $images = ['image', 'app1_image', 'app2_image', 'app3_image', 'app4_image']; // Product and Application images

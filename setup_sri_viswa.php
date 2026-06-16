@@ -22,8 +22,15 @@ try {
             ('Guide', 'guide.php', 'fa-circle-question', 3),
             ('About Us', 'about_us.php', 'fa-address-card', 4),
             ('Main Menu', 'main_menu.php', 'fa-list', 5),
-            ('Sub Menu', 'sub_menu.php', 'fa-indent', 6)");
+            ('Sub Menu', 'sub_menu.php', 'fa-indent', 6),
+            ('Change Password', 'change_password.php', 'fa-key', 7)");
         echo "main_menu seeded.\n";
+    } else {
+        $cpExists = $pdo->query("SELECT COUNT(*) FROM `main_menu` WHERE `file_path` = 'change_password.php'")->fetchColumn();
+        if (!$cpExists) {
+            $pdo->exec("INSERT INTO `main_menu` (`title`, `file_path`, `icon`, `sort_order`) VALUES ('Change Password', 'change_password.php', 'fa-key', 7)");
+            echo "Change Password menu item seeded.\n";
+        }
     }
 
     // 2. Create sub_menu table
@@ -143,6 +150,43 @@ try {
       KEY `idx_created_at` (`created_at`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     echo "contact_submissions created.\n";
+
+    // 7. Create menu_privileges table
+    $pdo->exec("DROP TABLE IF EXISTS `menu_privileges`");
+    $pdo->exec("CREATE TABLE `menu_privileges` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `menu_type` VARCHAR(10) NOT NULL,
+        `menu_item_id` INT NOT NULL,
+        `can_view` TINYINT(1) DEFAULT 1,
+        `can_add` TINYINT(1) DEFAULT 1,
+        `can_update` TINYINT(1) DEFAULT 1,
+        `can_delete` TINYINT(1) DEFAULT 1,
+        UNIQUE KEY `uk_menu_item` (`menu_type`, `menu_item_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    echo "menu_privileges created.\n";
+
+    // 8. Create admins table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `admins` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `username` VARCHAR(50) NOT NULL UNIQUE,
+        `password_hash` VARCHAR(255) NOT NULL,
+        `allowed_ip` VARCHAR(45) DEFAULT NULL,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    echo "admins table created/verified.\n";
+
+    $adminsCount = $pdo->query("SELECT COUNT(*) FROM `admins`")->fetchColumn();
+    if ($adminsCount == 0) {
+        $configPath = __DIR__ . '/includes/config.php';
+        $config = is_readable($configPath) ? require $configPath : [];
+        $adminCfg = $config['admin'] ?? [
+            'username' => 'admin',
+            'password_hash' => '$2y$10$wYUHTlQWyxbf4JkJb44CYOjgJHwF.hp5/qQTwOJTtOOURtolBaBMC'
+        ];
+        $stmt = $pdo->prepare("INSERT INTO `admins` (`username`, `password_hash`) VALUES (?, ?)");
+        $stmt->execute([$adminCfg['username'], $adminCfg['password_hash']]);
+        echo "admins table seeded.\n";
+    }
 
     echo "All tables initialized in sri_viswa successfully!\n";
 } catch (Exception $e) {

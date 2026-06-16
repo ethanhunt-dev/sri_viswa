@@ -9,11 +9,11 @@ require_once __DIR__ . '/core/models/CrudModel.php';
 $tableName = 'year';
 $adminPageTitle = 'Manage  Years';
 $adminNavActive = 'year';
-$privs = [
-    'add'    => true,
-    'update' => true,
-    'delete' => true
-];
+$privs = get_menu_privileges(__FILE__);
+if (!$privs['view']) {
+    header("Location: home");
+    exit;
+}
 
 // Define file upload fields
 $images = []; // e.g., ['profile_pic', 'banner']

@@ -3350,14 +3350,16 @@ body.about-tl-modal-open {
 
 /* App shell */
 .admin-app {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
 }
 
 @media (min-width: 880px) {
   .admin-app {
-    grid-template-columns: 260px 1fr;
+    flex-direction: row;
   }
 }
 
@@ -3368,10 +3370,30 @@ body.about-tl-modal-open {
   flex-direction: column;
   padding: 20px 0 16px;
   border-bottom: 1px solid rgba(255, 255, 255, .08);
+  width: 100%;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+@media (max-width: 879px) {
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    transform: translateX(-100%);
+    border-bottom: 0;
+  }
+  .admin-app.sidebar-open .admin-sidebar {
+    transform: translateX(0);
+  }
 }
 
 @media (min-width: 880px) {
   .admin-sidebar {
+    width: 260px;
+    min-width: 260px;
     border-bottom: 0;
     min-height: 100vh;
     position: sticky;
@@ -3380,6 +3402,49 @@ body.about-tl-modal-open {
     height: 100vh;
     overflow: auto;
   }
+  .admin-app.sidebar-collapsed .admin-sidebar {
+    margin-left: -260px;
+  }
+}
+
+.admin-sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 58, 133, 0.3);
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+@media (max-width: 879px) {
+  .admin-app.sidebar-open .admin-sidebar-overlay {
+    display: block;
+    opacity: 1;
+  }
+}
+
+.admin-topbar-toggle-btn {
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.admin-topbar-toggle-btn:hover {
+  background: var(--brandAccent);
 }
 
 .admin-sidebar-logo {
@@ -3470,7 +3535,8 @@ body.about-tl-modal-open {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 100vh;
+  flex-grow: 1;
+  width: 100%;
 }
 
 .admin-topbar {
@@ -3945,5 +4011,141 @@ body.about-tl-modal-open {
     flex: 1;
     min-width: 120px;
     justify-content: center;
+  }
+}
+
+/* Mooraa-style Modernized Dashboard Cards */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.admin-card-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 24px;
+  border-radius: 16px;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 150px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-card-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.16);
+}
+
+.admin-card-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.admin-card-btn:hover::before {
+  opacity: 1;
+}
+
+.admin-card-btn-ico {
+  font-size: 38px;
+  margin-bottom: 12px;
+  transition: transform 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-card-btn:hover .admin-card-btn-ico {
+  transform: scale(1.15);
+}
+
+.admin-card-btn-title {
+  font-family: Outfit, var(--fontHeading), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.88;
+  margin-bottom: 8px;
+}
+
+.admin-card-btn-value {
+  font-family: Outfit, var(--fontHeading), system-ui, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Card Themes with Vibrant Gradients */
+.admin-card-btn--blue {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+.admin-card-btn--green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+.admin-card-btn--purple {
+  background: linear-gradient(135deg, #6441A5 0%, #2a0845 100%);
+}
+.admin-card-btn--orange {
+  background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+}
+.admin-card-btn--red {
+  background: linear-gradient(135deg, #e52d27 0%, #b31217 100%);
+}
+.admin-card-btn--cyan {
+  background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+}
+.admin-card-btn--pink {
+  background: linear-gradient(135deg, #ec008c 0%, #fc6767 100%);
+}
+
+/* Spanning Configurations */
+.admin-card-btn--span3 {
+  grid-column: span 12;
+}
+.admin-card-btn--span4 {
+  grid-column: span 12;
+}
+.admin-card-btn--span6 {
+  grid-column: span 12;
+}
+.admin-card-btn--span12 {
+  grid-column: span 12;
+}
+
+@media (min-width: 640px) {
+  .admin-card-btn--span3 {
+    grid-column: span 6;
+  }
+  .admin-card-btn--span4 {
+    grid-column: span 6;
+  }
+  .admin-card-btn--span6 {
+    grid-column: span 6;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-card-btn--span3 {
+    grid-column: span 3;
+  }
+  .admin-card-btn--span4 {
+    grid-column: span 4;
   }
 }

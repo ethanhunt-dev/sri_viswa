@@ -10,8 +10,7 @@ require __DIR__ . '/../../../includes/admin/shell-start.php';
 
 <div class="admin-inner">
     <section class="admin-section">
-        <div class="admin-section-head" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
-            <h2 class="admin-section-title"><?= htmlspecialchars($adminPageTitle ?? 'Manage Records') ?></h2>
+        <div class="admin-section-head" style="margin-bottom: 20px; display:flex; justify-content:flex-end; align-items:center;">
             <?php if (!empty($privs['add'])): ?>
                 <a href="?add=1" id="add-btn" style="display: <?= (isset($_GET['add']) || !empty($editData)) ? 'none' : 'inline-block' ?>; background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-family:'Outfit', sans-serif; font-size: 14px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">+ Add <?= htmlspecialchars(str_replace('Manage ', '', $adminPageTitle ?? 'Record')) ?></a>
             <?php endif; ?>

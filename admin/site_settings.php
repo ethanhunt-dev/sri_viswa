@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../includes/db.php';
+
+$dbPrivs = get_menu_privileges(__FILE__);
+if (!$dbPrivs['view']) {
+    header("Location: home");
+    exit;
+}
 require_once __DIR__ . '/core/models/CrudModel.php';
 
 // Force redirect to the single settings edit page (ID 1) if not already there
@@ -18,7 +24,7 @@ $adminPageTitle = 'Site Settings';
 $adminNavActive = 'site_settings';
 $privs = [
     'add'    => false,
-    'update' => true,
+    'update' => $dbPrivs['update'],
     'delete' => false
 ];
 

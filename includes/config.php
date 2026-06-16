@@ -14,6 +14,19 @@ return [
         // generate a password hash with password_hash('your_password', PASSWORD_DEFAULT)
         'password_hash' => '$2y$10$wYUHTlQWyxbf4JkJb44CYOjgJHwF.hp5/qQTwOJTtOOURtolBaBMC',
     ],
+    'menu_privileges' => [
+        'main_menu' => [
+            'add' => true,
+            'update' => true,
+            'delete' => true,
+        ],
+        'sub_menu' => [
+            'add' => true,
+            'update' => true,
+            'delete' => true,
+        ],
+    ],
+    'developer_mode' => false,
     'mail' => [
         'enabled' => false,
         'smtp_host' => 'smtp.gmail.com',
