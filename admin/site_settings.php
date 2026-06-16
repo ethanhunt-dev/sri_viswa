@@ -1,0 +1,147 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/core/models/CrudModel.php';
+
+// Force redirect to the single settings edit page (ID 1) if not already there
+if (!isset($_GET['edit']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $msgParam = isset($_GET['msg']) ? '&msg=' . urlencode($_GET['msg']) : '';
+    header("Location: ?edit=1" . $msgParam);
+    exit;
+}
+
+// === 1. Configuration (The Controller Setup) ===
+$tableName = 'site_settings';
+$adminPageTitle = 'Site Settings';
+$adminNavActive = 'site_settings';
+$privs = [
+    'add'    => false,
+    'update' => true,
+    'delete' => false
+];
+
+// Define file upload fields
+$images = ['logo']; // Site logo
+$documents = [];
+
+// Exclude all fields from CKEditor to keep inputs clean and simple
+$excludeCkEditor = ['logo', 'address', 'phone', 'email'];
+
+// Advanced Form Controls
+$displayNames = [
+    'logo' => 'Website Header Logo',
+    'address' => 'Physical Address',
+    'phone' => 'Contact Phone(s) (comma-separated)',
+    'email' => 'Contact Email(s) (comma-separated)'
+];
+
+$relations = [];
+$multipleChoiceFields = [];
+$hideInList = ['logo', 'address', 'phone', 'email', 'created_at', 'updated_at'];
+$hideInAdd = [];
+$hideInEdit = [];
+
+$pdo = db();
+$model = new CrudModel($pdo, $tableName);
+$message = '';
+$isError = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
+    
+    // Generic File Upload Logic
+    if ($action === 'add' || $action === 'edit') {
+        $uploadDir = __DIR__ . '/../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        $allFiles = array_merge($images ?? [], $documents ?? []);
+        foreach ($allFiles as $fileField) {
+            if (isset($_FILES[$fileField]) && $_FILES[$fileField]['error'] === UPLOAD_ERR_OK) {
+                $tmpName = $_FILES[$fileField]['tmp_name'];
+                $safeName = preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($_FILES[$fileField]['name']));
+                $fileName = time() . '_' . $safeName;
+                $targetPath = $uploadDir . $fileName;
+                
+                if (move_uploaded_file($tmpName, $targetPath)) {
+                    $_POST[$fileField] = 'uploads/' . $fileName;
+                }
+            }
+        }
+    }
+    
+    if ($action === 'delete' && !empty($privs['delete']) && isset($_POST['id'])) {
+        try {
+            $model->delete((int)$_POST['id']);
+            header("Location: ?msg=deleted");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error deleting: " . $e->getMessage();
+            $isError = true;
+        }
+    } 
+    elseif ($action === 'add' && !empty($privs['add'])) {
+        try {
+            $model->insert($_POST);
+            header("Location: ?msg=added");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error adding: " . $e->getMessage();
+            $isError = true;
+        }
+    }
+    elseif ($action === 'edit' && !empty($privs['update']) && isset($_POST['id'])) {
+        try {
+            $model->update((int)$_POST['id'], $_POST);
+            header("Location: ?msg=updated");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error updating: " . $e->getMessage();
+            $isError = true;
+        }
+    }
+}
+
+if (isset($_GET['msg'])) {
+    if ($_GET['msg'] === 'deleted') $message = "Record deleted successfully!";
+    if ($_GET['msg'] === 'added') $message = "Record added successfully!";
+    if ($_GET['msg'] === 'updated') $message = "Record updated successfully!";
+}
+
+// === 3. Fetch Data for Views ===
+$schema = [];
+try {
+    $schema = $model->getSchema();
+} catch (PDOException $e) {
+    $message = "Database table '{$tableName}' does not exist. Please create it first.";
+    $isError = true;
+}
+
+$hasId = false;
+foreach ($schema as $c) {
+    if ($c['Field'] === 'id') $hasId = true;
+}
+
+$editData = null;
+if (isset($_GET['edit']) && !empty($privs['update']) && $hasId) {
+    $editData = $model->getById((int)$_GET['edit']);
+}
+
+// Pagination setup
+$limit = 10;
+$page = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$filter = [];
+$totalRecords = $model->countAll($filter);
+$totalPages = (int)ceil($totalRecords / $limit);
+$rows = [];
+if ($schema) {
+    $rows = $model->getPaginated($page, $limit, $filter);
+}
+
+$actionUrl = '?';
+$addMode = '';
+
+require __DIR__ . '/core/views/layout.php';

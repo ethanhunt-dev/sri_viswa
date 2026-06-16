@@ -1,0 +1,130 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/core/models/CrudModel.php';
+
+// === 1. Configuration (The Controller Setup) ===
+$tableName = 'year';
+$adminPageTitle = 'Manage  Years';
+$adminNavActive = 'year';
+$privs = [
+    'add'    => true,
+    'update' => true,
+    'delete' => true
+];
+
+// Define file upload fields
+$images = []; // e.g., ['profile_pic', 'banner']
+$documents = []; // e.g., ['resume_pdf']
+
+// Exclude large text fields from CKEditor if needed
+$excludeCkEditor = []; // e.g., ['short_description']
+
+// Advanced Form Controls
+$displayNames = []; // e.g., ['main_heading' => 'Page Heading']
+$relations = []; // e.g., ['category_id' => ['table' => 'categories', 'value_col' => 'id', 'display_col' => 'title']]
+$multipleChoiceFields = []; // e.g., ['tags', 'features']
+$hideInList = []; // e.g., ['password']
+$hideInAdd = []; // e.g., ['status']
+$hideInEdit = []; // e.g., ['slug']
+
+$pdo = db();
+$model = new CrudModel($pdo, $tableName);
+$message = '';
+$isError = false;
+
+// === 2. Handle POST Actions (The Controller Logic) ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $action = $_POST['action'];
+    
+    // Generic File Upload Logic
+    if ($action === 'add' || $action === 'edit') {
+        $uploadDir = __DIR__ . '/../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        $allFiles = array_merge($images ?? [], $documents ?? []);
+        foreach ($allFiles as $fileField) {
+            if (isset($_FILES[$fileField]) && $_FILES[$fileField]['error'] === UPLOAD_ERR_OK) {
+                $tmpName = $_FILES[$fileField]['tmp_name'];
+                // Sanitize filename
+                $safeName = preg_replace('/[^a-zA-Z0-9.\-_]/', '', basename($_FILES[$fileField]['name']));
+                $fileName = time() . '_' . $safeName;
+                $targetPath = $uploadDir . $fileName;
+                
+                if (move_uploaded_file($tmpName, $targetPath)) {
+                    // Save the path to $_POST so CrudModel handles it
+                    $_POST[$fileField] = 'uploads/' . $fileName;
+                }
+            }
+        }
+    }
+    
+    if ($action === 'delete' && !empty($privs['delete']) && isset($_POST['id'])) {
+        try {
+            $model->delete((int)$_POST['id']);
+            header("Location: ?msg=deleted");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error deleting: " . $e->getMessage();
+            $isError = true;
+        }
+    } 
+    elseif ($action === 'add' && !empty($privs['add'])) {
+        try {
+            $model->insert($_POST);
+            header("Location: ?msg=added");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error adding: " . $e->getMessage();
+            $isError = true;
+        }
+    }
+    elseif ($action === 'edit' && !empty($privs['update']) && isset($_POST['id'])) {
+        try {
+            $model->update((int)$_POST['id'], $_POST);
+            header("Location: ?msg=updated");
+            exit;
+        } catch (Exception $e) {
+            $message = "Error updating: " . $e->getMessage();
+            $isError = true;
+        }
+    }
+}
+
+if (isset($_GET['msg'])) {
+    if ($_GET['msg'] === 'deleted') $message = "Record deleted successfully!";
+    if ($_GET['msg'] === 'added') $message = "Record added successfully!";
+    if ($_GET['msg'] === 'updated') $message = "Record updated successfully!";
+}
+
+// === 3. Fetch Data for Views ===
+$schema = [];
+try {
+    $schema = $model->getSchema();
+} catch (PDOException $e) {
+    $message = "Database table '{$tableName}' does not exist. Please create it first.";
+    $isError = true;
+}
+
+$hasId = false;
+foreach ($schema as $c) {
+    if ($c['Field'] === 'id') $hasId = true;
+}
+
+$editData = null;
+if (isset($_GET['edit']) && !empty($privs['update']) && $hasId) {
+    $editData = $model->getById((int)$_GET['edit']);
+}
+
+$rows = [];
+if ($schema) {
+    $rows = $model->getAll();
+}
+
+$actionUrl = '?';
+
+require __DIR__ . '/core/views/layout.php';

@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# 1. Map /product/some-slug to product.php?slug=some-slug
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^product/([^/]+)/?$ product.php?slug=$1 [NC,L,QSA]
+
+# 2. Redirect /page.php to /page dynamically based on REQUEST_URI (only for external requests to avoid loops)
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteCond %{REQUEST_URI} ^(.*)\.php$ [NC]
+RewriteRule ^ %1 [R=302,L]
+
+# 3. Map /page to /page.php behind the scenes if the file exists
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*?)/?$ $1.php [NC,L]
