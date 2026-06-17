@@ -29,7 +29,7 @@ $hideInList = [];
 $hideInAdd = [];
 $hideInEdit = [];
 
-
+$pdo = db();
 $model = new CrudModel($pdo, $tableName);
 $message = '';
 $isError = false;

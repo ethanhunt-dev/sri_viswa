@@ -90,6 +90,48 @@ try {
         }
     }
 
+    // Clean up separate Home Page / Hero Banners main menu entries to avoid duplication
+    $sidebarPdo->exec("DELETE FROM `main_menu` WHERE `file_path` IN ('home_page.php', 'home_banners.php')");
+
+    // Self-healing: Check and restore a single Home Page parent group if missing
+    $homeMenuId = $sidebarPdo->query("SELECT `id` FROM `main_menu` WHERE `title` = 'Home Page' AND `file_path` IS NULL")->fetchColumn();
+    if (!$homeMenuId) {
+        $stmt = $sidebarPdo->prepare("INSERT INTO `main_menu` (`title`, `file_path`, `icon`, `sort_order`) VALUES (?, ?, ?, ?)");
+        $stmt->execute(['Home Page', NULL, 'fa-house', 2]);
+        $homeMenuId = $sidebarPdo->lastInsertId();
+        
+        // Re-adjust sort order of subsequent items
+        $sidebarPdo->exec("UPDATE `main_menu` SET `sort_order` = `sort_order` + 1 WHERE `sort_order` >= 2 AND `id` != " . (int)$homeMenuId);
+    } else {
+        $homeMenuId = (int)$homeMenuId;
+    }
+
+    if ($homeMenuId) {
+        // Check & insert Home Page Settings submenu
+        $pageSubExists = $sidebarPdo->prepare("SELECT COUNT(*) FROM `sub_menu` WHERE `main_menu_id` = ? AND `file_path` = 'home_page.php'");
+        $pageSubExists->execute([$homeMenuId]);
+        if ($pageSubExists->fetchColumn() == 0) {
+            $stmt = $sidebarPdo->prepare("INSERT INTO `sub_menu` (`main_menu_id`, `title`, `file_path`, `icon`, `sort_order`) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$homeMenuId, 'Home Page Settings', 'home_page.php', 'fa-file-lines', 1]);
+        }
+        
+        // Check & insert Hero Banners submenu
+        $bannerSubExists = $sidebarPdo->prepare("SELECT COUNT(*) FROM `sub_menu` WHERE `main_menu_id` = ? AND `file_path` = 'home_banners.php'");
+        $bannerSubExists->execute([$homeMenuId]);
+        if ($bannerSubExists->fetchColumn() == 0) {
+            $stmt = $sidebarPdo->prepare("INSERT INTO `sub_menu` (`main_menu_id`, `title`, `file_path`, `icon`, `sort_order`) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$homeMenuId, 'Hero Banners', 'home_banners.php', 'fa-images', 2]);
+        }
+    }
+
+    // Self-healing: Check and restore DB Backup menu if missing
+    $backupMenuExists = $sidebarPdo->query("SELECT COUNT(*) FROM `main_menu` WHERE `file_path` = 'db_backup.php'")->fetchColumn();
+    if (!$backupMenuExists) {
+        $maxSort = (int)$sidebarPdo->query("SELECT MAX(sort_order) FROM `main_menu`")->fetchColumn();
+        $stmt = $sidebarPdo->prepare("INSERT INTO `main_menu` (`title`, `file_path`, `icon`, `sort_order`) VALUES (?, ?, ?, ?)");
+        $stmt->execute(['DB Backup', 'db_backup.php', 'fa-database', $maxSort + 1]);
+    }
+
     // Load config to check developer mode
     $configPath = __DIR__ . '/../config.php';
     $config = is_readable($configPath) ? require $configPath : [];

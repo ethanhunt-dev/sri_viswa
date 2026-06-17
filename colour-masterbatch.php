@@ -89,6 +89,184 @@ $cmBest = [
     ['label' => 'Cost Effective', 'icon' => 'assets/images/Cost.png'],
 ];
 
+// Build page schema dynamically from database
+try {
+    require_once __DIR__ . '/includes/db.php';
+    $slug = 'colour-masterbatch';
+    $product = get_row('SELECT * FROM `products` WHERE `slug` = ?', [$slug]);
+    if ($product) {
+        $benefits = get_result('SELECT * FROM `benefits` WHERE `product_id` = ? ORDER BY `id` ASC', [$product['id']]);
+        $apps = get_result('SELECT * FROM `applications` WHERE `product_id` = ? ORDER BY `id` ASC', [$product['id']]);
+        
+        $relatedProducts = [];
+        $dbRelated = get_result('SELECT product_name, slug FROM products WHERE id != ? ORDER BY id ASC', [$product['id']]);
+        foreach ($dbRelated as $rp) {
+            $relatedProducts[] = [
+                '@type' => 'Product',
+                'name' => $rp['product_name'],
+                'url' => base_url('product/' . $rp['slug'])
+            ];
+        }
+        
+        $benefitItems = [];
+        foreach ($benefits as $idx => $b) {
+            $benefitItems[] = [
+                '@type' => 'ListItem',
+                'position' => $idx + 1,
+                'name' => trim(strip_tags(str_replace('&nbsp;', ' ', $b['title']))),
+                'description' => trim(strip_tags(str_replace('&nbsp;', ' ', $b['text'])))
+            ];
+        }
+        
+        $appItems = [];
+        foreach ($apps as $idx => $app) {
+            $appItems[] = [
+                '@type' => 'ListItem',
+                'position' => $idx + 1,
+                'name' => trim(strip_tags(str_replace('&nbsp;', ' ', $app['title']))),
+                'description' => trim(strip_tags(str_replace('&nbsp;', ' ', $app['text'])))
+            ];
+        }
+        
+        $graph = [
+            [
+                '@type' => 'WebSite',
+                '@id' => 'https://www.srivasavi.co.in/#website',
+                'url' => 'https://www.srivasavi.co.in/',
+                'name' => 'Sri Vasavi Pigments',
+                'alternateName' => 'Plastimix',
+                'publisher' => [
+                    '@id' => 'https://www.srivasavi.co.in/#organization'
+                ]
+            ],
+            [
+                '@type' => 'Organization',
+                '@id' => 'https://www.srivasavi.co.in/#organization',
+                'name' => 'Sri Vasavi Pigments',
+                'url' => 'https://www.srivasavi.co.in/',
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => 'https://www.srivasavi.co.in/assets/images/logo.png'
+                ],
+                'email' => 'info@vasavipigments.com',
+                'telephone' => '+91-884-2321425',
+                'foundingDate' => '1997',
+                'description' => 'Sri Vasavi Pigments is a leading Masterbatch Manufacturer in India producing Colour Masterbatches, White Masterbatches, Additive Masterbatches, Antimicrobial Masterbatches, Anti-Static Masterbatches, Flame Retardant Masterbatches and Anti-Rodent Masterbatches.',
+                'brand' => [
+                    '@type' => 'Brand',
+                    'name' => 'Plastimix'
+                ],
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => '1-13-056, Gopal Nagar',
+                    'addressLocality' => 'Yanam',
+                    'postalCode' => '533464',
+                    'addressRegion' => 'Puducherry',
+                    'addressCountry' => 'IN'
+                ]
+            ],
+            [
+                '@type' => 'WebPage',
+                '@id' => base_url('product/' . $slug . '#webpage'),
+                'url' => base_url('product/' . $slug),
+                'name' => $product['product_name'] . ' Manufacturer in India | Custom Polymer Solutions',
+                'description' => trim(strip_tags((string)($product['description'] ?? ''))),
+                'inLanguage' => 'en',
+                'isPartOf' => [
+                    '@id' => 'https://www.srivasavi.co.in/#website'
+                ],
+                'about' => [
+                    '@id' => 'https://www.srivasavi.co.in/#organization'
+                ],
+                'breadcrumb' => [
+                    '@id' => base_url('product/' . $slug . '#breadcrumb')
+                ]
+            ],
+            [
+                '@type' => 'BreadcrumbList',
+                '@id' => base_url('product/' . $slug . '#breadcrumb'),
+                'itemListElement' => [
+                    [
+                        '@type' => 'ListItem',
+                        'position' => 1,
+                        'name' => 'Home',
+                        'item' => 'https://www.srivasavi.co.in/'
+                    ],
+                    [
+                        '@type' => 'ListItem',
+                        'position' => 2,
+                        'name' => 'Products',
+                        'item' => 'https://www.srivasavi.co.in/#products'
+                    ],
+                    [
+                        '@type' => 'ListItem',
+                        'position' => 3,
+                        'name' => $product['product_name'],
+                        'item' => base_url('product/' . $slug)
+                    ]
+                ]
+            ],
+            [
+                '@type' => 'Product',
+                '@id' => base_url('product/' . $slug . '#product'),
+                'name' => $product['product_name'],
+                'url' => base_url('product/' . $slug),
+                'image' => 'https://www.srivasavi.co.in/assets/images/logo.png',
+                'description' => trim(strip_tags((string)($product['description'] ?? ''))),
+                'brand' => [
+                    '@type' => 'Brand',
+                    'name' => 'Plastimix'
+                ],
+                'manufacturer' => [
+                    '@id' => 'https://www.srivasavi.co.in/#organization'
+                ],
+                'category' => 'Masterbatches',
+                'offers' => [
+                    '@type' => 'Offer',
+                    'url' => base_url('contact.php'),
+                    'priceCurrency' => 'INR',
+                    'availability' => 'https://schema.org/InStock',
+                    'seller' => [
+                        '@id' => 'https://www.srivasavi.co.in/#organization'
+                    ],
+                    'areaServed' => [
+                        '@type' => 'Country',
+                        'name' => 'India'
+                    ]
+                ],
+                'isRelatedTo' => $relatedProducts
+            ]
+        ];
+        
+        if (count($benefitItems) > 0) {
+            $graph[] = [
+                '@type' => 'ItemList',
+                '@id' => base_url('product/' . $slug . '#benefits'),
+                'name' => 'Benefits of Sri Vasavi Pigments ' . $product['product_name'],
+                'numberOfItems' => count($benefitItems),
+                'itemListElement' => $benefitItems
+            ];
+        }
+        
+        if (count($appItems) > 0) {
+            $graph[] = [
+                '@type' => 'ItemList',
+                '@id' => base_url('product/' . $slug . '#applications'),
+                'name' => 'Applications of Sri Vasavi Pigments ' . $product['product_name'],
+                'numberOfItems' => count($appItems),
+                'itemListElement' => $appItems
+            ];
+        }
+        
+        $pageSchema = '<!-- Schema markup -->
+<script type="application/ld+json">
+' . json_encode(['@context' => 'https://schema.org', '@graph' => $graph], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . '
+</script>';
+    }
+} catch (Throwable $e) {
+    // Fail silently
+}
+
 require __DIR__ . '/includes/header.php';
 ?>
 

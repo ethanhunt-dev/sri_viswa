@@ -55,6 +55,188 @@ foreach ($dbIndustries as $ind) {
 $industriesTop = array_slice($mappedInds, 0, 4);
 $industriesBottom = array_slice($mappedInds, 4);
 
+$pageSchema = '<!-- Schema markup -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@graph":[
+
+    {
+      "@type":"Organization",
+      "@id":"https://www.srivasavi.co.in/#organization",
+      "name":"Sri Vasavi Pigments",
+      "url":"https://www.srivasavi.co.in/",
+      "logo":"https://www.srivasavi.co.in/assets/images/logo.png",
+      "description":"Sri Vasavi Pigments is a leading Masterbatch Manufacturer in India producing Colour Masterbatches, White Masterbatches, Additive Masterbatches, Antimicrobial Masterbatches, Anti-Static Masterbatches, Flame Retardant Masterbatches and Anti-Rodent Masterbatches.",
+      "email":"info@vasavipigments.com",
+      "telephone":"+91-884-2321425",
+      "brand":{
+        "@type":"Brand",
+        "name":"Plastimix"
+      },
+      "address":{
+        "@type":"PostalAddress",
+        "streetAddress":"1-13-056, Gopal Nagar",
+        "addressLocality":"Yanam",
+        "postalCode":"533464",
+        "addressRegion":"Puducherry",
+        "addressCountry":"IN"
+      }
+    },
+
+    {
+      "@type":"LocalBusiness",
+      "@id":"https://www.srivasavi.co.in/#localbusiness",
+      "name":"Sri Vasavi Pigments",
+      "image":"https://www.srivasavi.co.in/assets/images/logo.png",
+      "url":"https://www.srivasavi.co.in/",
+      "telephone":"+91-884-2321425",
+      "email":"sales@vasavipigments.com",
+      "priceRange":"$$$",
+      "address":{
+        "@type":"PostalAddress",
+        "streetAddress":"1-13-056, Gopal Nagar",
+        "addressLocality":"Yanam",
+        "postalCode":"533464",
+        "addressRegion":"Puducherry",
+        "addressCountry":"IN"
+      }
+    },
+
+    {
+      "@type":"WebSite",
+      "@id":"https://www.srivasavi.co.in/#website",
+      "url":"https://www.srivasavi.co.in/",
+      "name":"Sri Vasavi Pigments",
+      "publisher":{
+        "@id":"https://www.srivasavi.co.in/#organization"
+      }
+    },
+
+    {
+      "@type":"Manufacturer",
+      "@id":"https://www.srivasavi.co.in/#manufacturer",
+      "name":"Sri Vasavi Pigments",
+      "url":"https://www.srivasavi.co.in/",
+      "foundingDate":"1997",
+      "brand":"Plastimix",
+      "description":"Manufacturer of Colour Masterbatches, White Masterbatches, Additive Masterbatches and Specialty Masterbatches for plastic applications across India."
+    },
+
+    {
+      "@type":"ItemList",
+      "name":"Masterbatch Products",
+      "itemListElement":[
+
+        {
+          "@type":"Product",
+          "position":1,
+          "name":"Colour Masterbatches",
+          "url":"https://www.srivasavi.co.in/colour-masterbatch.php",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":2,
+          "name":"White Masterbatches",
+          "url":"https://www.srivasavi.co.in/white-masterbatch.php",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":3,
+          "name":"Additive Masterbatches",
+          "url":"https://www.srivasavi.co.in/additive-masterbatches.php",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":4,
+          "name":"Antimicrobial Masterbatches",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":5,
+          "name":"Anti-Static Masterbatches",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":6,
+          "name":"Flame Retardant Masterbatches",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        },
+
+        {
+          "@type":"Product",
+          "position":7,
+          "name":"Anti-Rodent Masterbatches",
+          "brand":"Plastimix",
+          "manufacturer":"Sri Vasavi Pigments"
+        }
+
+      ]
+    },
+
+    {
+      "@type":"FAQPage",
+      "mainEntity":[
+
+        {
+          "@type":"Question",
+          "name":"What products does Sri Vasavi Pigments manufacture?",
+          "acceptedAnswer":{
+            "@type":"Answer",
+            "text":"Sri Vasavi Pigments manufactures Colour Masterbatches, White Masterbatches, Additive Masterbatches, Antimicrobial Masterbatches, Anti-Static Masterbatches, Flame Retardant Masterbatches and Anti-Rodent Masterbatches."
+          }
+        },
+
+        {
+          "@type":"Question",
+          "name":"Where is Sri Vasavi Pigments located?",
+          "acceptedAnswer":{
+            "@type":"Answer",
+            "text":"Sri Vasavi Pigments is located in Yanam, Puducherry, India and supplies masterbatch solutions across India."
+          }
+        },
+
+        {
+          "@type":"Question",
+          "name":"Does Sri Vasavi Pigments offer custom colour matching?",
+          "acceptedAnswer":{
+            "@type":"Answer",
+            "text":"Yes. Sri Vasavi Pigments develops custom colour masterbatch solutions tailored to specific polymer and application requirements."
+          }
+        },
+
+        {
+          "@type":"Question",
+          "name":"What industries use Sri Vasavi Pigments masterbatches?",
+          "acceptedAnswer":{
+            "@type":"Answer",
+            "text":"Industries including packaging, agriculture, water management, automotive, electrical, furniture and consumer products use Sri Vasavi Pigments masterbatches."
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
+</script>';
+
 require __DIR__ . '/includes/user/header.php';
 ?>
 

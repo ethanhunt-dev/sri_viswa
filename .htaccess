@@ -1,7 +1,10 @@
+# ErrorDocument 404 /404.php
+
 RewriteEngine On
 
 # 0. Redirect clean /admin/login/dip to /admin/login?dip=1
-RewriteRule ^admin/login/dip/?$ /sri_viswa/admin/login?dip=1 [R=302,NC,L]
+RewriteCond %{REQUEST_URI} ^(.*?)/admin/login/dip/?$ [NC]
+RewriteRule ^ %1/admin/login?dip=1 [R=302,NC,L]
 
 # 1. Map /product/some-slug to product.php?slug=some-slug
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -17,3 +20,8 @@ RewriteRule ^ %1 [R=302,L]
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f
 RewriteRule ^(.*?)/?$ $1.php [NC,L]
+
+# 4. Fallback to 404.php for any remaining non-existent paths (dynamic 404 relative to project folder)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ 404.php [L]
