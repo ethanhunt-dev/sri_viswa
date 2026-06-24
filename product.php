@@ -9,6 +9,21 @@ if (empty($slug)) {
     exit;
 }
 
+// Redirect custom slugs to their dedicated custom template files
+if ($slug === 'colour-masterbatches' || $slug === 'colour-masterbatch') {
+    header('Location: ' . base_url('colour-masterbatch'));
+    exit;
+} elseif ($slug === 'white-masterbatches' || $slug === 'white-masterbatch') {
+    header('Location: ' . base_url('white-masterbatch'));
+    exit;
+} elseif ($slug === 'additive-masterbatches') {
+    header('Location: ' . base_url('additive-masterbatches'));
+    exit;
+} elseif ($slug === 'filler-masterbatches') {
+    header('Location: ' . base_url('filler-masterbatches'));
+    exit;
+}
+
 // Fetch product details
 $product = get_row('SELECT * FROM `products` WHERE `slug` = ?', [$slug]);
 if (!$product) {

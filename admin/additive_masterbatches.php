@@ -6,9 +6,9 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/core/models/CrudModel.php';
 
 // === 1. Configuration (The Controller Setup) ===
-$tableName = 'about_us';
-$adminPageTitle = 'Manage About Us';
-$adminNavActive = 'about_us';
+$tableName = 'additive_masterbatches';
+$adminPageTitle = 'Manage Additive Masterbatches';
+$adminNavActive = 'additive_masterbatches';
 $privs = get_menu_privileges(__FILE__);
 if (!$privs['view']) {
     header("Location: home");
@@ -16,19 +16,22 @@ if (!$privs['view']) {
 }
 
 // Define file upload fields
-$images = ['main_image','image_on_home_page']; // e.g., ['profile_pic', 'banner']
-$documents = []; // e.g., ['resume_pdf']
+$images = []; 
+$documents = []; 
 
 // Exclude large text fields from CKEditor if needed
-$excludeCkEditor = ['main_heading']; // e.g., ['short_description']
+$excludeCkEditor = ['name', 'sort_order']; 
 
 // Advanced Form Controls
-$displayNames = []; // e.g., ['main_heading' => 'Page Heading']
-$relations = []; // e.g., ['category_id' => ['table' => 'categories', 'value_col' => 'id', 'display_col' => 'title']]
-$multipleChoiceFields = []; // e.g., ['tags', 'features']
-$hideInList = []; // e.g., ['password']
-$hideInAdd = []; // e.g., ['status']
-$hideInEdit = []; // e.g., ['slug']
+$displayNames = [
+    'name' => 'Plastimix Range Name',
+    'description' => 'Description'
+]; 
+$relations = []; 
+$multipleChoiceFields = []; 
+$hideInList = ['created_at', 'updated_at']; 
+$hideInAdd = []; 
+$hideInEdit = []; 
 
 $pdo = db();
 $model = new CrudModel($pdo, $tableName);
@@ -120,9 +123,15 @@ if (isset($_GET['edit']) && !empty($privs['update']) && $hasId) {
     $editData = $model->getById((int)$_GET['edit']);
 }
 
+// Pagination setup
+$limit = 10;
+$page = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$filter = [];
+$totalRecords = $model->countAll($filter);
+$totalPages = (int)ceil($totalRecords / $limit);
 $rows = [];
 if ($schema) {
-    $rows = $model->getAll();
+    $rows = $model->getPaginated($page, $limit, $filter);
 }
 
 $actionUrl = '?';

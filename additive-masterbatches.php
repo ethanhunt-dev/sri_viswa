@@ -64,6 +64,13 @@ $fillerWhy = [
 // Build page schema dynamically from database
 try {
     require_once __DIR__ . '/includes/db.php';
+    
+    // Load from database if available
+    $dbRows = get_result("SELECT name, description AS `desc` FROM `additive_masterbatches` ORDER BY `sort_order` ASC, `id` ASC");
+    if (!empty($dbRows)) {
+        $plastimixRows = $dbRows;
+    }
+    
     $slug = 'additive-masterbatches';
     $product = get_row('SELECT * FROM `products` WHERE `slug` = ?', [$slug]);
     if ($product) {
@@ -285,7 +292,7 @@ require __DIR__ . '/includes/header.php';
                         <?php foreach ($plastimixRows as $row): ?>
                             <tr>
                                 <td><?= htmlspecialchars($row['name']) ?></td>
-                                <td><?= htmlspecialchars($row['desc']) ?></td>
+                                <td><?= $row['desc'] ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

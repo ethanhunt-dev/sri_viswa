@@ -321,14 +321,14 @@ require __DIR__ . '/includes/user/header.php';
                 <div class="about-copy">
                     <h2 class="section-title about-title"><?= htmlspecialchars(strip_tags((string)($aboutUsData['main_heading'] ?? 'About us'))) ?></h2>
                     <div class="section-text">
-                        <?= $aboutUsData['description'] ?? '' ?>
+                        <?= mb_strimwidth(strip_tags((string)($aboutUsData['main_text'] ?? '')), 0, 250, '...') ?>
                     </div>
                     <br>
-                    <a class="btn btn-primary" href="<?= base_url('about') ?>">About us</a>
+                    <a class="btn btn-primary" href="<?= base_url('about') ?>">Read More</a>
                 </div>
                 <div class="about-media">
                     <?php
-                    $aboutImage = !empty($aboutUsData['main_image']) ? base_url($aboutUsData['main_image']) : base_url('assets/images/about-us.jpg');
+                    $aboutImage = !empty($aboutUsData['image_on_home_page']) ? base_url($aboutUsData['image_on_home_page']) : base_url('assets/images/about-us.jpg');
                     ?>
                     <img class="about-img" src="<?= htmlspecialchars($aboutImage) ?>" alt="Masterbatch pellets" loading="lazy" />
                 </div>
@@ -340,10 +340,21 @@ require __DIR__ . '/includes/user/header.php';
                 <h2 class="section-title center">Our Products</h2>
                 <div class="product-grid">
                     <?php
-                    $dbProducts = get_result("SELECT * FROM `products` ORDER BY `id` ASC");
+                    $dbProducts = get_result("SELECT * FROM `products` ORDER BY `id` ASC LIMIT 3");
                     foreach ($dbProducts as $prod):
-                        $prodUrl = base_url('product/' . $prod['slug']);
-                        $prodImg = base_url(ltrim((string)($prod['image'] ?? ''), '/'));
+                        $slug = $prod['slug'];
+                        if ($slug === 'colour-masterbatches' || $slug === 'colour-masterbatch') {
+                            $prodUrl = base_url('colour-masterbatch');
+                        } elseif ($slug === 'white-masterbatches' || $slug === 'white-masterbatch') {
+                            $prodUrl = base_url('white-masterbatch');
+                        } elseif ($slug === 'additive-masterbatches') {
+                            $prodUrl = base_url('additive-masterbatches');
+                        } elseif ($slug === 'filler-masterbatches') {
+                            $prodUrl = base_url('filler-masterbatches');
+                        } else {
+                            $prodUrl = base_url('product/' . $slug);
+                        }
+                        $prodImg = base_url(ltrim((string)($prod['image_1'] ?? ''), '/'));
                     ?>
                         <article class="product-card" id="product-<?= htmlspecialchars($prod['slug']) ?>">
                             <a class="product-card__link" href="<?= htmlspecialchars($prodUrl) ?>" aria-label="<?= htmlspecialchars($prod['product_name']) ?>">
@@ -353,7 +364,7 @@ require __DIR__ . '/includes/user/header.php';
                                     </div>
                                 </div>
                                 <h3 class="product-title"><?= htmlspecialchars($prod['product_name']) ?></h3>
-                                <p class="product-desc"><?= strip_tags((string)($prod['description'] ?? '')) ?></p>
+                                <p class="product-desc"><?= strip_tags((string)($prod['description_on_home_page'] ?? '')) ?></p>
                             </a>
                         </article>
                     <?php endforeach; ?>
@@ -370,7 +381,7 @@ require __DIR__ . '/includes/user/header.php';
                             <?= $homeData['industries_text'] ?? '' ?>
                         </div>
                         <br>
-                        <a class="btn btn-primary" href="<?= base_url('industries') ?>">Industries</a>
+                        <a class="btn btn-primary" href="<?= base_url('contact') ?>">Contact Us</a>
                     </div>
                     <div class="industries-panel" aria-label="Industry tiles">
                         <div class="industries-panel-rows">

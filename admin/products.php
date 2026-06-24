@@ -16,7 +16,7 @@ if (!$privs['view']) {
 }
 
 // Define file upload fields
-$images = ['image', 'app1_image', 'app2_image', 'app3_image', 'app4_image']; // Product and Application images
+$images = ['image', 'app1_image', 'app2_image', 'app3_image', 'app4_image','image_1']; // Product and Application images
 $documents = ['datasheet_pdf']; // PDF datasheets
 
 // Exclude text fields from CKEditor if needed

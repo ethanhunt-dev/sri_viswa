@@ -23,17 +23,28 @@ if (!isset($productSubmenu)) {
     try {
         $dbProds = get_result("SELECT `product_name`, `slug` FROM `products` ORDER BY `id` ASC");
         foreach ($dbProds as $dp) {
+            $slug = $dp['slug'];
+            $href = 'product/' . $slug;
+            if ($slug === 'colour-masterbatches' || $slug === 'colour-masterbatch') {
+                $href = 'colour-masterbatch';
+            } elseif ($slug === 'white-masterbatches' || $slug === 'white-masterbatch') {
+                $href = 'white-masterbatch';
+            } elseif ($slug === 'additive-masterbatches') {
+                $href = 'additive-masterbatches';
+            } elseif ($slug === 'filler-masterbatches') {
+                $href = 'filler-masterbatches';
+            }
             $productSubmenu[] = [
                 'label' => $dp['product_name'],
-                'href' => 'product/' . $dp['slug']
+                'href' => $href
             ];
         }
     } catch (Throwable $e) {
         $productSubmenu = [
-            ['label' => 'Colour Masterbatches', 'href' => 'product/colour-masterbatch'],
-            ['label' => 'White Masterbatches', 'href' => 'product/white-masterbatch'],
-            ['label' => 'Additive Masterbatches', 'href' => 'product/additive-masterbatches'],
-            ['label' => 'Filler Masterbatches', 'href' => 'product/filler-masterbatches'],
+            ['label' => 'Colour Masterbatches', 'href' => 'colour-masterbatch'],
+            ['label' => 'White Masterbatches', 'href' => 'white-masterbatch'],
+            ['label' => 'Additive Masterbatches', 'href' => 'additive-masterbatches'],
+            ['label' => 'Filler Masterbatches', 'href' => 'filler-masterbatches'],
         ];
     }
 }
@@ -76,7 +87,7 @@ if ($canonical === '') {
 
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="<?= base_url('assets/css/site.css?v=20260608') ?>" />
+    <link rel="stylesheet" href="<?= base_url('assets/css/site.css?v=' . filemtime(__DIR__ . '/../../assets/css/site.css')) ?>" />
     <?php if (isset($pageSchema) && $pageSchema !== ''): ?>
         <?= $pageSchema ?>
     <?php endif; ?>
